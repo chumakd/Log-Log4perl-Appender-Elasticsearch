@@ -20,37 +20,38 @@ Log::Log4perl::Appender::Elasticsearch - Log to Elasticsearch
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
     use Log::Log4perl;
 
     Log::Log4perl->init(\<<'HERE');
-log4perl.logger=DEBUG, ES
+    log4perl.logger=DEBUG, ES
 
-log4perl.appender.ES = Log::Log4perl::Appender::Elasticsearch
-log4perl.appender.ES.layout = Log::Log4perl::Layout::NoopLayout
+    log4perl.appender.ES = Log::Log4perl::Appender::Elasticsearch
+    log4perl.appender.ES.layout = Log::Log4perl::Layout::NoopLayout
 
-log4perl.appender.ES.body.level = %p
-log4perl.appender.ES.body.module = %M
-log4perl.appender.ES.body.line = %L
+    log4perl.appender.ES.body.level = %p
+    log4perl.appender.ES.body.module = %M
+    log4perl.appender.ES.body.line = %L
 
-log4perl.appender.ES.nodes = localhost:9200
-log4perl.appender.ES.index = log4perl
-log4perl.appender.ES.type = entry
+    log4perl.appender.ES.nodes = localhost:9200
+    log4perl.appender.ES.index = log4perl
+    log4perl.appender.ES.type = entry
 
-log4perl.appender.ES.use_https = 0
-log4perl.appender.ES.user_agent.timeout = 5
+    log4perl.appender.ES.use_https = 0
+    log4perl.appender.ES.user_agent.timeout = 5
 
-log4perl.appender.ES.headers.User-Agent = foo
-HERE
+    log4perl.appender.ES.headers.User-Agent = foo
+    HERE
 
     Log::Log4perl::get_logger()->info("OK");
+
     # look up:
     # curl -XPOST 'http://localhost:9200/log4perl/_search' -d \
     # '{"query": {"query_string": {"query": "level:INFO AND message:OK"}}}'
@@ -63,9 +64,45 @@ HERE
     #        }
 
 
-=head1 SUBROUTINES/METHODS
+=head1 DESCRIPTION
 
-=head2 new
+This is a simple appender for providing the log messages to elasticsearch. LWP::UserAgent is used for message sending via PUT request.
+
+=head1 OPTIONS
+
+=over 4
+
+=item nodes
+
+a comma separeted list of nodes. The message will be sent to the next node only if previous request failed
+
+=item index
+
+The name of the elasticsearch index the message will be stored in.
+
+=item type
+
+The name of the type in given index the message belongs to.
+
+=item use_https
+
+0|1 global https setting for all nodes
+
+the individual https setting possible too: C<log4perl.appender.ES.nodes = https://user:password@node1:9200,localhost:9200>
+
+=item user_agent
+
+LWP::UserAgent parameters.
+
+C<log4perl.appender.ES.user_agent.timeout = 5>
+
+=item headers
+
+HTTP::Headers parameters
+
+C<log4perl.appender.ES.headers.User-Agent = foo>
+
+=back
 
 =cut
 
@@ -78,9 +115,10 @@ sub new {
     return $self;
 } ## end sub new
 
-=head2 _init(%p)
-
-=cut
+sub log {
+    my ($self, %p) = @_;
+    $self->_send_request($self->_prepare_body(%p));
+}
 
 sub _init {
     my ($self, %p) = @_;
@@ -129,19 +167,6 @@ sub _init {
     }
 } ## end sub _init
 
-=head2 log(%p)
-
-=cut
-
-sub log {
-    my ($self, %p) = @_;
-    $self->_send_request($self->_prepare_body(%p));
-}
-
-=head2 _send_request($b)
-
-=cut
-
 sub _send_request {
     my ($self, $b) = @_;
     my $id = Data::UUID::LibUUID::new_uuid_string(2);
@@ -164,10 +189,6 @@ sub _send_request {
         join '; ', @errors);
 } ## end sub _send_request
 
-=head2 _uri($node, $id)
-
-=cut
-
 sub _uri {
     my ($self, $node, $id) = @_;
     my $uri = $node->clone;
@@ -176,10 +197,6 @@ sub _uri {
 
     return $uri;
 } ## end sub _uri
-
-=head2 _headers($uri)
-
-=cut
 
 sub _headers {
     my ($self, $uri) = @_;
@@ -196,10 +213,6 @@ sub _headers {
     return $h;
 } ## end sub _headers
 
-=head2 _request($uri, $b)
-
-=cut
-
 sub _request {
     my ($self, $uri, $b) = @_;
 
@@ -211,10 +224,6 @@ sub _request {
         $data
     );
 } ## end sub _request
-
-=head2 _prepare_body(%p)
-
-=cut
 
 sub _prepare_body {
     my ($self, %p) = @_;
@@ -237,7 +246,7 @@ sub _prepare_body {
 
 =head1 AUTHOR
 
-Alexei Pastuchov C<< <palik@cpan.com> >>
+Alexei Pastuchov C<< <palik at cpan.com> >>
 
 =head1 BUGS
 
@@ -276,12 +285,13 @@ L<http://search.cpan.org/dist/Log-Log4perl-Appender-Elasticsearch/>
 =back
 
 
-=head1 ACKNOWLEDGEMENTS
+=head1 REPOSITORY
 
+L<https://github.com/p-alik/Log-Log4perl-Appender-Elasticsearch.git>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2014 by Alexei Pastuchov E<lt>palik@cpan.comE<gt>.
+Copyright 2014 by Alexei Pastuchov E<lt>palik at cpan.comE<gt>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
