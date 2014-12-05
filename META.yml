@@ -18,7 +18,6 @@ no_index:
     - t
     - inc
 requires:
-  Data::UUID::LibUUID: 0.05
   HTTP::Headers: 6.05
   HTTP::Request: 6
   JSON: 2.61
@@ -27,4 +26,4 @@ requires:
   MIME::Base64: 3.13
   URI: 1.6
   perl: 5.006
-version: 0.02
+version: 0.03
