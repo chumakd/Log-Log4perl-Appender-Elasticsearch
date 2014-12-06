@@ -1,5 +1,5 @@
 ---
-abstract: 'Log to Elasticsearch'
+abstract: 'implements appending to Elasticsearch'
 author:
   - 'Alexei Pastuchov<palik@cpan.org>'
 build_requires:
@@ -26,4 +26,4 @@ requires:
   MIME::Base64: 3.13
   URI: 1.6
   perl: 5.006
-version: 0.03
+version: 0.04
