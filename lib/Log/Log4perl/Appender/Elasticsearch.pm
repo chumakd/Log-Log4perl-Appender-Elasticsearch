@@ -162,6 +162,18 @@ sub _init {
     }
 } ## end sub _init
 
+sub index {
+    my $self      = shift;
+    my $new_index = shift;
+
+    return $self->{_index}
+        if not defined $new_index;
+
+    $self->{_index} = $new_index;
+
+    return;
+} ## end sub index
+
 sub _send_request {
     my ($self, $b) = @_;
     my @nodes = @{ $self->{_nodes} };
